@@ -2216,6 +2216,14 @@ def setup_gateway(config: dict):
             if home_channel:
                 save_env_value("MATTERMOST_HOME_CHANNEL", home_channel)
 
+    # ── Session ──
+    existing_session = get_env_value("SESSION_MNEMONIC")
+    if existing_session:
+        print_info("Session: already configured")
+    if existing_session or prompt_yes_no("Set up Session (decentralized messenger)?", False):
+        from hermes_cli.gateway import _setup_session
+        _setup_session()
+
     # ── WhatsApp ──
     existing_whatsapp = get_env_value("WHATSAPP_ENABLED")
     if not existing_whatsapp and prompt_yes_no("Set up WhatsApp?", False):
@@ -2975,6 +2983,8 @@ def _run_quick_setup(config: dict, hermes_home):
                 plat = "Discord"
             elif "SLACK" in name:
                 plat = "Slack"
+            elif "SESSION" in name:
+                plat = "Session"
             else:
                 continue
             if plat not in platforms:
@@ -2986,6 +2996,7 @@ def _run_quick_setup(config: dict, hermes_home):
                 "Telegram": "📱 Telegram",
                 "Discord": "💬 Discord",
                 "Slack": "💼 Slack",
+                "Session": "🔒 Session",
             }.get(p, p)
             for p in platform_order
         ]
@@ -2998,7 +3009,7 @@ def _run_quick_setup(config: dict, hermes_home):
         for idx in selected_indices:
             plat = platform_order[idx]
             vars_list = platforms[plat]
-            emoji = {"Telegram": "📱", "Discord": "💬", "Slack": "💼"}.get(plat, "")
+            emoji = {"Telegram": "📱", "Discord": "💬", "Slack": "💼", "Session": "🔒"}.get(plat, "")
             print()
             print(color(f"  ─── {emoji} {plat} ───", Colors.CYAN))
             print()
