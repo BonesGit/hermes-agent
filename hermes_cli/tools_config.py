@@ -150,6 +150,7 @@ PLATFORMS = {
     "wecom": {"label": "💬 WeCom", "default_toolset": "hermes-wecom"},
     "api_server": {"label": "🌐 API Server", "default_toolset": "hermes-api-server"},
     "mattermost": {"label": "💬 Mattermost", "default_toolset": "hermes-mattermost"},
+    "session":   {"label": "🔒 Session",    "default_toolset": "hermes-session"},
     "webhook": {"label": "🔗 Webhook", "default_toolset": "hermes-webhook"},
 }
 

@@ -167,6 +167,7 @@ def _deliver_result(job: dict, content: str) -> None:
         "wecom": Platform.WECOM,
         "email": Platform.EMAIL,
         "sms": Platform.SMS,
+        "session": Platform.SESSION,
     }
     platform = platform_map.get(platform_name.lower())
     if not platform:

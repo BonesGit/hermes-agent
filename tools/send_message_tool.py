@@ -133,6 +133,7 @@ def _handle_send(args):
         "wecom": Platform.WECOM,
         "email": Platform.EMAIL,
         "sms": Platform.SMS,
+        "session": Platform.SESSION,
     }
     platform = platform_map.get(platform_name)
     if not platform:
@@ -371,6 +372,8 @@ async def _send_to_platform(platform, pconfig, chat_id, message, thread_id=None,
             result = await _send_feishu(pconfig, chat_id, chunk, thread_id=thread_id)
         elif platform == Platform.WECOM:
             result = await _send_wecom(pconfig.extra, chat_id, chunk)
+        elif platform == Platform.SESSION:
+            result = await _send_session(pconfig.extra, chat_id, chunk)
         else:
             result = {"error": f"Direct sending not yet implemented for {platform.value}"}
 
@@ -879,6 +882,20 @@ async def _send_feishu(pconfig, chat_id, message, media_files=None, thread_id=No
         }
     except Exception as e:
         return {"error": f"Feishu send failed: {e}"}
+
+
+async def _send_session(extra: dict, chat_id: str, message: str) -> dict:
+    """Send a Session message via the local bridge HTTP endpoint."""
+    import httpx
+    port = extra.get("bridge_port", "8095")
+    url = f"http://127.0.0.1:{port}/send"
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(url, json={"to": chat_id, "body": message})
+            resp.raise_for_status()
+            return {"success": True, "platform": "session", "chat_id": chat_id}
+    except Exception as e:
+        return {"error": f"Session send failed: {e}"}
 
 
 def _check_send_message():

@@ -23,6 +23,7 @@ PLATFORMS = {
     "slack":    "💼 Slack",
     "whatsapp": "📱 WhatsApp",
     "signal":   "📡 Signal",
+    "session":  "🔒 Session",
     "email":    "📧 Email",
     "homeassistant": "🏠 Home Assistant",
     "mattermost": "💬 Mattermost",
