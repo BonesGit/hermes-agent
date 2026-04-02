@@ -77,6 +77,10 @@ async function runSetup() {
   if (setupClient.isRegistered()) {
     const sessionId = setupClient.getSessionId();
     console.log(JSON.stringify({ status: 'existing', sessionId }));
+  } else if (MNEMONIC) {
+    // Restore an existing account from a known mnemonic
+    const sessionId = await setupClient.restoreAccount(MNEMONIC.trim());
+    console.log(JSON.stringify({ status: 'restored', sessionId }));
   } else {
     // Generate a fresh mnemonic and create a new account
     const mnemonic = await SessionClient.generateMnemonic();

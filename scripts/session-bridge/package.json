@@ -4,6 +4,6 @@
   "type": "module",
   "private": true,
   "dependencies": {
-    "@bonesgit/session-desktop-library": "^0.1.10"
+    "@bonesgit/session-desktop-library": "^0.1.12"
   }
 }
