@@ -2216,14 +2216,6 @@ def setup_gateway(config: dict):
             if home_channel:
                 save_env_value("MATTERMOST_HOME_CHANNEL", home_channel)
 
-    # ── Session ──
-    existing_session = get_env_value("SESSION_MNEMONIC")
-    if existing_session:
-        print_info("Session: already configured")
-    if existing_session or prompt_yes_no("Set up Session (decentralized messenger)?", False):
-        from hermes_cli.gateway import _setup_session
-        _setup_session()
-
     # ── WhatsApp ──
     existing_whatsapp = get_env_value("WHATSAPP_ENABLED")
     if not existing_whatsapp and prompt_yes_no("Set up WhatsApp?", False):
@@ -2235,6 +2227,14 @@ def setup_gateway(config: dict):
             print_success("WhatsApp enabled")
             print_info("Run 'hermes whatsapp' to choose your mode (separate bot number")
             print_info("or personal self-chat) and pair via QR code.")
+
+    # ── Session ──
+    existing_session = get_env_value("SESSION_MNEMONIC")
+    if existing_session:
+        print_info("Session: already configured")
+    if existing_session or prompt_yes_no("Set up Session (decentralized messenger)?", False):
+        from hermes_cli.gateway import _setup_session
+        _setup_session()
 
     # ── Webhooks ──
     existing_webhook = get_env_value("WEBHOOK_ENABLED")
