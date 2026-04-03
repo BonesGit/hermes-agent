@@ -1801,7 +1801,7 @@ def _setup_session():
     existing_mnemonic = get_env_value("SESSION_MNEMONIC")
     if existing_mnemonic:
         print()
-        print_warning("✓ Session is already configured.")
+        print_warning("Session is already configured.")
         if not prompt_yes_no("  Reconfigure Session?", False):
             return
 
@@ -1831,7 +1831,7 @@ def _setup_session():
         print_error(f" ✗ npm install failed: {npm_result.stderr.strip()}")
         print_info("   For help with dependencies see https://github.com/BonesGit/session-desktop-library/blob/dev-library/CONTRIBUTING.md")
         return
-    print_success(" ✓ Session bridge dependencies installed")
+    print_success("  Session bridge dependencies installed")
 
     data_path = get_env_value("SESSION_DATA_PATH") or str(Path.home() / ".hermes" / "session-data")
 
@@ -1931,11 +1931,11 @@ def _setup_session():
 
     # Final status messages
     if status == "restored":
-        print_success(f" ✓ Account restored! Bot Session ID: {bot_session_id}")
+        print_success(f"  Account restored! Bot Session ID: {bot_session_id}")
     elif status == "existing":
-        print_success(f" ✓ Existing account found! Bot Session ID: {bot_session_id}")
+        print_success(f"  Existing account found! Bot Session ID: {bot_session_id}")
     else:
-        print_success(f" ✓ Account created! Bot Session ID: {bot_session_id}")
+        print_success(f"  Account created! Bot Session ID: {bot_session_id}")
         print_info("   Mnemonic saved securely to ~/.hermes/.env - back it up!")
     print_info(f"   Share this Session ID with contacts: {bot_session_id}")
 
