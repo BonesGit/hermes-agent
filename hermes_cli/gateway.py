@@ -1829,6 +1829,7 @@ def _setup_session():
     )
     if npm_result.returncode != 0:
         print_error(f" ✗ npm install failed: {npm_result.stderr.strip()}")
+        print_info("   For help with dependencies see https://github.com/BonesGit/session-desktop-library/blob/dev-library/CONTRIBUTING.md")
         return
     print_success(" ✓ Session bridge dependencies installed")
 
