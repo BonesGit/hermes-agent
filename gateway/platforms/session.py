@@ -300,15 +300,21 @@ class SessionAdapter(BasePlatformAdapter):
         if self._bridge_process:
             try:
                 pid = self._bridge_process.pid
-                try:
-                    os.killpg(os.getpgid(pid), signal.SIGTERM)
-                except (ProcessLookupError, PermissionError):
+                if hasattr(os, "killpg"):
+                    try:
+                        os.killpg(os.getpgid(pid), signal.SIGTERM)
+                    except (ProcessLookupError, PermissionError):
+                        self._bridge_process.terminate()
+                else:
                     self._bridge_process.terminate()
                 await asyncio.sleep(1)
                 if self._bridge_process.poll() is None:
-                    try:
-                        os.killpg(os.getpgid(pid), signal.SIGKILL)
-                    except (ProcessLookupError, PermissionError):
+                    if hasattr(os, "killpg"):
+                        try:
+                            os.killpg(os.getpgid(pid), signal.SIGKILL)
+                        except (ProcessLookupError, PermissionError):
+                            self._bridge_process.kill()
+                    else:
                         self._bridge_process.kill()
             except Exception as e:
                 logger.warning("Session: error stopping bridge: %s", e)
