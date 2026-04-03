@@ -300,22 +300,26 @@ class SessionAdapter(BasePlatformAdapter):
         if self._bridge_process:
             try:
                 pid = self._bridge_process.pid
-                if hasattr(os, "killpg"):
+                if sys.platform == "win32":
+                    # On Windows, shell=True means node is a child of cmd.exe.
+                    # taskkill /T kills the whole process tree so node doesn't
+                    # survive as an orphan.
+                    subprocess.run(
+                        ["taskkill", "/F", "/T", "/PID", str(pid)],
+                        capture_output=True,
+                    )
+                else:
+                    # Unix: kill the entire process group
                     try:
                         os.killpg(os.getpgid(pid), signal.SIGTERM)
                     except (ProcessLookupError, PermissionError):
                         self._bridge_process.terminate()
-                else:
-                    self._bridge_process.terminate()
-                await asyncio.sleep(1)
-                if self._bridge_process.poll() is None:
-                    if hasattr(os, "killpg"):
+                    await asyncio.sleep(1)
+                    if self._bridge_process.poll() is None:
                         try:
                             os.killpg(os.getpgid(pid), signal.SIGKILL)
                         except (ProcessLookupError, PermissionError):
                             self._bridge_process.kill()
-                    else:
-                        self._bridge_process.kill()
             except Exception as e:
                 logger.warning("Session: error stopping bridge: %s", e)
             self._bridge_process = None
