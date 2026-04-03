@@ -6494,7 +6494,13 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
     cron_thread.start()
     
     # Wait for shutdown
-    await runner.wait_for_shutdown()
+    try:
+        await runner.wait_for_shutdown()
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        # Windows: loop.add_signal_handler is not supported, so Ctrl+C cancels
+        # the task directly without invoking signal_handler(). Call stop() here
+        # so adapters disconnect and background processes are cleaned up.
+        await runner.stop()
 
     if runner.should_exit_with_failure:
         if runner.exit_reason:
