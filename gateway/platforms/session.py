@@ -54,6 +54,7 @@ import random
 import re
 import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -968,13 +969,23 @@ class SessionAdapter(BasePlatformAdapter):
             self._bridge_log,
         )
 
-        process = subprocess.Popen(
-            ["node", str(bridge_script)],
-            env=env,
-            stdout=bridge_log_fh,
-            stderr=bridge_log_fh,
-            preexec_fn=os.setsid,
-        )
+        if sys.platform == "win32":
+            process = subprocess.Popen(
+                ["node", str(bridge_script)],
+                env=env,
+                stdout=bridge_log_fh,
+                stderr=bridge_log_fh,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+                shell=True,
+            )
+        else:
+            process = subprocess.Popen(
+                ["node", str(bridge_script)],
+                env=env,
+                tdout=bridge_log_fh,
+                stderr=bridge_log_fh,
+                preexec_fn=os.setsid,
+            )
         self._bridge_process = process
         return process
 

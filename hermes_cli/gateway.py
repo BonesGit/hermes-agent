@@ -1801,36 +1801,36 @@ def _setup_session():
     existing_mnemonic = get_env_value("SESSION_MNEMONIC")
     if existing_mnemonic:
         print()
-        print_warning("Session is already configured.")
+        print_warning("✓ Session is already configured.")
         if not prompt_yes_no("  Reconfigure Session?", False):
             return
 
     node = shutil.which("node")
     if not node:
-        print_error("Node.js not found. Install Node.js >= 24.12.0 first.")
+        print_error("✗ Node.js not found. Install Node.js >= 24.12.0 first.")
         return
 
     bridge_dir = Path(__file__).resolve().parents[1] / "scripts" / "session-bridge"
     bridge_script = bridge_dir / "session-bridge.mjs"
     if not bridge_script.exists():
-        print_error(f"Bridge script not found at {bridge_script}")
-        print_info("Ensure the session bridge is installed in scripts/session-bridge/")
+        print_error(f"✗ Bridge script not found at {bridge_script}")
+        print_info("  Ensure the session bridge is installed in scripts/session-bridge/")
         return
 
-    if not (bridge_dir / "node_modules").exists():
-        print()
-        print_info("  Installing Session bridge dependencies...")
-        npm_result = subprocess.run(
-            ["npm", "install"],
-            cwd=str(bridge_dir),
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if npm_result.returncode != 0:
-            print_error(f"  npm install failed: {npm_result.stderr.strip()}")
-            return
-        print_success("  Session bridge dependencies installed")
+    print()
+    print_info("→ Installing Session bridge dependencies (few mins)...")
+    npm_result = subprocess.run(
+        ["npm", "install"],
+        cwd=str(bridge_dir),
+        capture_output=True,
+        text=True,
+        timeout=500,
+        shell=sys.platform == "win32", # Only enable shell on windows
+    )
+    if npm_result.returncode != 0:
+        print_error(f" ✗ npm install failed: {npm_result.stderr.strip()}")
+        return
+    print_success(" ✓ Session bridge dependencies installed")
 
     data_path = get_env_value("SESSION_DATA_PATH") or str(Path.home() / ".hermes" / "session-data")
 
@@ -1844,14 +1844,14 @@ def _setup_session():
         print_info("  Enter your 13-word Session mnemonic (input hidden):")
         mnemonic = prompt("  Mnemonic", password=True)
         if not mnemonic or len(mnemonic.split()) != 13:
-            print_error("  Invalid mnemonic - must be exactly 13 words.")
+            print_error("  ✗ Invalid mnemonic - must be exactly 13 words.")
             return
         if existing_mnemonic and mnemonic.strip() != existing_mnemonic.strip():
             print()
-            print_warning("  This mnemonic differs from the one currently in .env.")
-            print_warning("  Switching accounts requires wiping the existing data directory:")
-            print_warning(f"    rm -rf {data_path}")
-            print_warning("  The gateway will fail to start if the data dir has a different account registered.")
+            print_warning("  ⚠ This mnemonic differs from the one currently in .env.")
+            print_warning("    Switching accounts requires wiping the existing data directory:")
+            print_warning(f"      rm -rf {data_path}")
+            print_warning("    The gateway will fail to start if the data dir has a different account registered.")
             if not prompt_yes_no("  Continue anyway?", False):
                 return
 
@@ -1865,7 +1865,7 @@ def _setup_session():
     existing_recipient = get_env_value("SESSION_HOME_CHANNEL") or ""
     recipient_id = prompt("  Your Session ID", default=existing_recipient or None)
     if not recipient_id:
-        print_error("  Session ID is required.")
+        print_error("  ✗ Session ID is required.")
         return
 
     # Step 4: run bridge --setup
@@ -1873,9 +1873,9 @@ def _setup_session():
     env = {**os.environ, "SESSION_DATA_PATH": data_path, "SESSION_BOT_NAME": bot_name}
     if has_mnemonic:
         env["SESSION_MNEMONIC"] = mnemonic
-        print_info("  Restoring account and fetching Session ID...")
+        print_info("→ Restoring account and fetching Session ID...")
     else:
-        print_info("  Creating new Session account...")
+        print_info("→ Creating new Session account...")
 
     try:
         result = subprocess.run(
@@ -1884,11 +1884,11 @@ def _setup_session():
         )
     except subprocess.TimeoutExpired:
         action = "restore" if has_mnemonic else "creation"
-        print_error(f"  Account {action} timed out. Check Node.js and try again.")
+        print_error(f" ✗ Account {action} timed out. Check Node.js and try again.")
         return
 
     if result.returncode != 0:
-        print_error(f"  Bridge setup failed: {result.stderr.strip()}")
+        print_error(f" ✗ Bridge setup failed: {result.stderr.strip()}")
         return
 
     # The bridge outputs JSON on one line among other library log output.
@@ -1903,20 +1903,20 @@ def _setup_session():
                 continue
 
     if not data:
-        print_error("  Could not parse bridge output.")
+        print_error(" ✗ Could not parse bridge output.")
         return
 
     bot_session_id = data.get("sessionId", "")
     status = data.get("status", "")
 
     if not bot_session_id:
-        print_error("  Bridge returned incomplete data (no Session ID).")
+        print_error(" ✗ Bridge returned incomplete data (no Session ID).")
         return
 
     if status == "created":
         mnemonic = data.get("mnemonic", "")
         if not mnemonic:
-            print_error("  Bridge returned incomplete data (no mnemonic).")
+            print_error(" ✗ Bridge returned incomplete data (no mnemonic).")
             return
 
     #  Save all env values
@@ -1930,13 +1930,13 @@ def _setup_session():
 
     # Final status messages
     if status == "restored":
-        print_success(f"  Account restored! Bot Session ID: {bot_session_id}")
+        print_success(f" ✓ Account restored! Bot Session ID: {bot_session_id}")
     elif status == "existing":
-        print_success(f"  Existing account found! Bot Session ID: {bot_session_id}")
+        print_success(f" ✓ Existing account found! Bot Session ID: {bot_session_id}")
     else:
-        print_success(f"  Account created! Bot Session ID: {bot_session_id}")
-        print_info("  Mnemonic saved securely to ~/.hermes/.env - back it up!")
-    print_info(f"  Share this Session ID with contacts: {bot_session_id}")
+        print_success(f" ✓ Account created! Bot Session ID: {bot_session_id}")
+        print_info("   Mnemonic saved securely to ~/.hermes/.env - back it up!")
+    print_info(f"   Share this Session ID with contacts: {bot_session_id}")
 
     print()
     print_success("🔒️ Session configured!")
