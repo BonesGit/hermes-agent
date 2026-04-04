@@ -992,7 +992,7 @@ class SessionAdapter(BasePlatformAdapter):
             process = subprocess.Popen(
                 ["node", str(bridge_script)],
                 env=env,
-                tdout=bridge_log_fh,
+                stdout=bridge_log_fh,
                 stderr=bridge_log_fh,
                 preexec_fn=os.setsid,
             )
