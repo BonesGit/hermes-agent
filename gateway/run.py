@@ -5551,6 +5551,13 @@ class GatewayRunner:
                 logger.warning("BlueBubbles: aiohttp/httpx missing or BLUEBUBBLES_SERVER_URL/BLUEBUBBLES_PASSWORD not configured")
                 return None
             return BlueBubblesAdapter(config)
+        
+        elif platform == Platform.SESSION:
+            from gateway.platforms.session import SessionAdapter, check_session_requirements
+            if not check_session_requirements():
+                logger.warning("Session: SESSION_BOT_ID not set or Node.js not available")
+                return None
+            return SessionAdapter(config)
 
         elif platform == Platform.QQBOT:
             from gateway.platforms.qqbot import QQAdapter, check_qq_requirements
@@ -5608,13 +5615,16 @@ class GatewayRunner:
             Platform.BLUEBUBBLES: "BLUEBUBBLES_ALLOWED_USERS",
             Platform.QQBOT: "QQ_ALLOWED_USERS",
             Platform.YUANBAO: "YUANBAO_ALLOWED_USERS",
+            Platform.SESSION: "SESSION_ALLOWED_USERS",
         }
         platform_group_user_env_map = {
             Platform.TELEGRAM: "TELEGRAM_GROUP_ALLOWED_USERS",
+            Platform.SESSION: "SESSION_GROUP_ALLOWED_USERS",
         }
         platform_group_chat_env_map = {
             Platform.TELEGRAM: "TELEGRAM_GROUP_ALLOWED_CHATS",
             Platform.QQBOT: "QQ_GROUP_ALLOWED_USERS",
+            Platform.SESSION: "SESSION_GROUP_ALLOWED_CHATS",
         }
         platform_allow_all_map = {
             Platform.TELEGRAM: "TELEGRAM_ALLOW_ALL_USERS",
@@ -5634,6 +5644,7 @@ class GatewayRunner:
             Platform.BLUEBUBBLES: "BLUEBUBBLES_ALLOW_ALL_USERS",
             Platform.QQBOT: "QQ_ALLOW_ALL_USERS",
             Platform.YUANBAO: "YUANBAO_ALLOW_ALL_USERS",
+            Platform.SESSION: "SESSION_ALLOW_ALL_USERS",
         }
         # Bots admitted by {PLATFORM}_ALLOW_BOTS bypass the human allowlist (#4466).
         platform_allow_bots_map = {
@@ -12766,7 +12777,7 @@ class GatewayRunner:
     # programmatic interfaces that should not trigger system updates.
     _UPDATE_ALLOWED_PLATFORMS = frozenset({
         Platform.TELEGRAM, Platform.DISCORD, Platform.SLACK, Platform.WHATSAPP,
-        Platform.SIGNAL, Platform.MATTERMOST, Platform.MATRIX,
+        Platform.SIGNAL, Platform.MATTERMOST, Platform.MATRIX, Platform.SESSION,
         Platform.HOMEASSISTANT, Platform.EMAIL, Platform.SMS, Platform.DINGTALK,
         Platform.FEISHU, Platform.WECOM, Platform.WECOM_CALLBACK, Platform.WEIXIN, Platform.BLUEBUBBLES, Platform.QQBOT, Platform.LOCAL,
     })
@@ -17150,7 +17161,13 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
     cron_thread.start()
     
     # Wait for shutdown
-    await runner.wait_for_shutdown()
+    try:
+        await runner.wait_for_shutdown()
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        # Windows: loop.add_signal_handler is not supported, so Ctrl+C cancels
+        # the task directly without invoking signal_handler(). Call stop() here
+        # so adapters disconnect and background processes are cleaned up.
+        await runner.stop()
 
     if runner.should_exit_with_failure:
         if runner.exit_reason:
