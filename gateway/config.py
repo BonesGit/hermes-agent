@@ -301,6 +301,8 @@ class Platform(Enum):
     QQBOT = "qqbot"
     YUANBAO = "yuanbao"
     RELAY = "relay"  # generic relay adapter fronted by the connector (EXPERIMENTAL)
+    SESSION = "session"
+
     @classmethod
     def _missing_(cls, value):
         """Accept unknown platform names only for known plugin adapters.
@@ -842,6 +844,7 @@ _PLATFORM_CONNECTED_CHECKERS: dict[Platform, Callable[[PlatformConfig], bool]] =
     Platform.WHATSAPP_CLOUD: lambda cfg: bool(
         cfg.extra.get("phone_number_id") and cfg.extra.get("access_token")
     ),
+    Platform.SESSION: lambda cfg: bool(cfg.extra.get("bot_id")),
     Platform.SIGNAL: lambda cfg: bool(cfg.extra.get("http_url")),
     Platform.API_SERVER: lambda cfg: _has_usable_api_server_key(
         cfg.extra.get("key") if cfg else None
@@ -2020,6 +2023,28 @@ def _apply_env_overrides(config: GatewayConfig) -> None:
             name=getenv("SIGNAL_HOME_CHANNEL_NAME", "Home"),
             thread_id=getenv("SIGNAL_HOME_CHANNEL_THREAD_ID") or None,
         )
+
+    # Session Protocol
+    session_bot_id = os.getenv("SESSION_BOT_ID")
+    if session_bot_id:
+        if Platform.SESSION not in config.platforms:
+            config.platforms[Platform.SESSION] = PlatformConfig()
+        config.platforms[Platform.SESSION].enabled = True
+        config.platforms[Platform.SESSION].extra.update({
+            "bot_id": session_bot_id,
+            "bot_name": os.getenv("SESSION_BOT_NAME", "Hermes"),
+            "data_path": os.getenv("SESSION_DATA_PATH", str(get_hermes_home() / "session-data")),
+            "bridge_port": os.getenv("SESSION_BRIDGE_PORT", "8095"),
+            "log_level": os.getenv("SESSION_LOG_LEVEL", "warn"),
+            "startup_timeout": os.getenv("SESSION_STARTUP_TIMEOUT", "15"),
+        })
+        session_home = os.getenv("SESSION_HOME_CHANNEL")
+        if session_home:
+            config.platforms[Platform.SESSION].home_channel = HomeChannel(
+                platform=Platform.SESSION,
+                chat_id=session_home,
+                name=os.getenv("SESSION_HOME_CHANNEL_NAME", "Home"),
+            )
 
     # Mattermost
     mattermost_token = getenv("MATTERMOST_TOKEN")
