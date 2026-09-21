@@ -6,6 +6,7 @@ maintainer: BonesGit
 tier: community
 category: platform
 docs_url: https://github.com/BonesGit/hermes-vector-platform
+image: https://raw.githubusercontent.com/VectorPrivacy/Vector/0ca50a9e7aa4aa3879199994a63acd1c574b7708/assets/github_header_readme.png
 version: "0.5.2"
 platforms: []
 capabilities:
